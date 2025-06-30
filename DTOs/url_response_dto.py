@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
 
-class UrlResponseDTO(BaseModel):
+class UrlResponse(BaseModel):
     url: str
     short_url: str

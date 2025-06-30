@@ -1,0 +1,1 @@
+from .open_api_config import OPEN_API_CONFIG as FastApiConfig

@@ -1,5 +1,5 @@
 from pydantic import BaseModel
 
 
-class UrlRequestDTO(BaseModel):
+class UrlRequest(BaseModel):
     url: str
