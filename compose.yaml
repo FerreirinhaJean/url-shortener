@@ -1,0 +1,45 @@
+name: url_shortener_app
+
+services:
+  db:
+    image: postgres:16.6
+    container_name: url_shortener_database
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data
+    environment:
+      -  POSTGRES_PASSWORD=postgres
+      -  POSTGRES_USER=postgres
+      -  POSTGRES_DB=url_shortener
+      -  PGUSER=postgres
+    # ports:
+      # - 5433:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-d", "$$POSTGRES_DB", "-U", "$$PGUSER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  backend:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    container_name: url_shortener_backend
+    image: url_shortener_backend:latest
+    env_file: .env
+    ports:
+      - 8000:8000
+    depends_on:
+      db:
+        condition: service_healthy
+  alembic:
+    image: url_shortener_backend:latest
+    container_name: url_shortener_alembic
+    env_file: .env
+    command: /bin/sh -c 'alembic upgrade head'
+    depends_on:
+      db:
+        condition: service_healthy
+      backend:
+        condition: service_started
+volumes:
+  postgres_volume:
+    name: url_shortener_volume
