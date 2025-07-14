@@ -8,17 +8,29 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from configs import FastApiConfig
+from database import Database
 from DTOs import (
+    ErrorResponse,
     FieldError,
     UrlRequestDTO,
     UrlResponseDTO,
-    ValidationErrorResponse,
 )
-from services import ShortenerService
+from repositories import UrlRepository
+from services import CodeGenerator, ShortenerService, UrlValidator
 
 load_dotenv()
 app = FastAPI(**FastApiConfig)
-service = ShortenerService()
+
+
+def get_shortener_service() -> ShortenerService:
+    return ShortenerService(
+        repository=UrlRepository(Database().get_engine()),
+        validator=UrlValidator(),
+        code_generator=CodeGenerator(),
+    )
+
+
+service = get_shortener_service()
 
 
 @app.post("/shorten-url", tags=["URLs"])
@@ -47,11 +59,27 @@ def validation_error(
             FieldError(field=error["loc"][1], message=error["msg"])
         )
 
-    error_response = ValidationErrorResponse(
+    error_response = ErrorResponse(
         status=HTTPStatus.UNPROCESSABLE_ENTITY.value,
         error=HTTPStatus.UNPROCESSABLE_ENTITY.name,
         message="Validation failed",
         errors=field_errors,
+        timestamp=datetime.now(UTC),
+    )
+
+    return JSONResponse(
+        status_code=error_response["status"],
+        content=jsonable_encoder(error_response),
+    )
+
+
+@app.exception_handler(Exception)
+def exception(request: Request, exc: Exception) -> JSONResponse:
+    error_response = ErrorResponse(
+        status=HTTPStatus.INTERNAL_SERVER_ERROR.value,
+        error=HTTPStatus.INTERNAL_SERVER_ERROR.name,
+        message="internal server error",
+        errors=[],
         timestamp=datetime.now(UTC),
     )
 

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import TypedDict
+from typing import Any, TypedDict
 
 
 class FieldError(TypedDict):
@@ -7,9 +7,9 @@ class FieldError(TypedDict):
     message: str
 
 
-class ValidationErrorResponse(TypedDict):
+class ErrorResponse(TypedDict):
     status: int
     error: str
     message: str
-    errors: list[FieldError]
+    errors: list[FieldError] | list[Any]
     timestamp: datetime
